@@ -1,227 +1,260 @@
-﻿using TechniaAssignement.Models;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Technia.Business;
+using Technia.Business.Interfaces;
+using Technia.Business.Repositories;
+using Technia.Infrastructure.AutoMapper;
+using Technia.Infrastructure.Repositories;
+using Technia.Presentation.DTOs;
+using Technia.Presentation.Services;
+using Technia.Presentation.Services.Interfaces;
 
-namespace TechniaAssignement;
-
-internal class Program
+namespace TechniaAssignement
 {
-    private static void Main(string[] args)
+    public class Program
     {
-        Console.WriteLine("Hello World!");
-        ShowMenu();
-    }
+        private static IServiceProvider _provider;
+        private static IStudentService _studentService;
+        private static ITeacherService _teacherService;
 
-    private static bool ShowMenu()
-    {
-        Console.Clear();
-        Console.WriteLine("Choose an option:");
-        Console.WriteLine("1. Create Student");
-        Console.WriteLine("2. Search Student");
-        Console.WriteLine("3. Update Student");
-        Console.WriteLine("4. Create Teacher");
-        Console.WriteLine("5. Search Teacher");
-        Console.WriteLine("6. Update Teacher");
-        Console.WriteLine("7. Exit");
-        Console.WriteLine("\r\nSelect an option");
-
-        switch (Console.ReadLine())
+        private static void Main(string[] args)
         {
-            case "1":
-                CreateStudent();
-                return false;
+            var services = new ServiceCollection();
+            services.AddAutoMapper(typeof(PresentationProfile));
+            services.AddSingleton<ITeacherRepository, TeacherRepository>();
+            services.AddSingleton<ITeacherBusiness, TeacherBusiness>();
+            services.AddSingleton<ITeacherService, TeacherService>();
+            services.AddSingleton<IStudentRepository, StudentRepository>();
+            services.AddSingleton<IStudentBusiness, StudentBusiness>();
+            services.AddSingleton<IStudentService, StudentService>();
+            _provider = services.BuildServiceProvider();
+            _studentService = _provider.GetService<IStudentService>();
+            _teacherService = _provider.GetService<ITeacherService>();
 
-            case "2":
-                SearchStudent();
-                return false;
-
-            case "3":
-                UpdateStudent();
-                return false;
-
-            case "4":
-                CreateTeacher();
-                return false;
-
-            case "5":
-                SearchTeacher();
-                return false;
-
-            case "6":
-                UpdateTeacher();
-                return false;
-
-            case "7":
-                return false;
-
-            default:
-                return true;
-        }
-    }
-
-    private static void SearchStudent()
-    {
-        DataServiceJson dataServiceJson = new DataServiceJson();
-        var firstName = GetInput("Type the First Name");
-        var lastName = GetInput("Type the Last Name");
-
-        var student = dataServiceJson.SearchStudentByFullName(firstName, lastName);
-
-        if (student != null)
-        {
-            Console.WriteLine($"{student.FirstName} {student.LastName}");
-        }
-        else
-            Console.WriteLine("Student not found");
-    }
-
-    private static void SearchTeacher()
-    {
-        DataServiceJson dataServiceJson = new DataServiceJson();
-        var firstName = GetInput("Type the First Name");
-        var lastName = GetInput("Type the Last Name");
-
-        var teacher = dataServiceJson.SearchTeacherByFullName(firstName, lastName);
-
-        if (teacher != null)
-        {
-            Console.WriteLine($"{teacher.FirstName} {teacher.LastName}");
-        }
-        else
-            Console.WriteLine("Teacher not found");
-    }
-
-    private static void UpdateTeacher()
-    {
-        DataServiceJson dataServiceJson = new DataServiceJson();
-        var firstName = GetInput("Type the First Name");
-        var lastName = GetInput("Type the Last Name");
-
-        var teacher = dataServiceJson.SearchTeacherByFullName(firstName, lastName);
-
-        if (PromptConfirmation("Would like to update the first student name?"))
-        {
-            teacher.FirstName = GetInput("Type the First Name"); ;
-        }
-        if (PromptConfirmation("Would like to update the last student name?"))
-        {
-            teacher.LastName = GetInput("Type the Last Name"); ;
+            ShowMenu();
         }
 
-        dataServiceJson.UpdateTeacher(teacher, firstName, lastName);
-    }
-
-    private static void UpdateStudent()
-    {
-        DataServiceJson dataServiceJson = new DataServiceJson();
-        var firstName = GetInput("Type the First Name");
-        var lastName = GetInput("Type the Last Name");
-
-        var student = dataServiceJson.SearchStudentByFullName(firstName, lastName);
-
-        if (PromptConfirmation("Would like to update the first student name?"))
+        private static void ShowMenu()
         {
-            student.FirstName = GetInput("Type the First Name"); ;
-        }
-        if (PromptConfirmation("Would like to update the last student name?"))
-        {
-            student.LastName = GetInput("Type the Last Name"); ;
-        }
-
-        dataServiceJson.UpdateStudent(student, firstName, lastName);
-    }
-
-    private static void CreateStudent()
-    {
-        var student = new Student
-        {
-            FirstName = GetInput("Type the First Name"),
-            LastName = GetInput("Type the Last Name")
-        };
-
-        var grades = new List<Grade>();
-        var grade = new Grade();
-
-        if (PromptConfirmation("Would you like to inform the grades?"))
-        {
-            bool executingLoop = true;
-
-            while (executingLoop)
+            bool finished = false;
+            do
             {
-                grade.Value = Convert.ToDouble(GetInput("Grade"));
-                grade.Subject = GetInput("Subject");
-                grade.Observation = GetInput("Observation");
+                Console.Clear();
+                Console.WriteLine("Choose an option:");
+                Console.WriteLine("1. Create Student");
+                Console.WriteLine("2. Search Student");
+                Console.WriteLine("3. Update Student");
+                Console.WriteLine("4. Create Teacher");
+                Console.WriteLine("5. Search Teacher");
+                Console.WriteLine("6. Update Teacher");
+                Console.WriteLine("7. Exit");
+                Console.WriteLine("\r\nSelect an option");
 
-                grades.Add(grade);
-
-                var response = GetInput("Type Y to register more grades or N to exit");
-
-                if (response.ToLower() == "n")
+                switch (Console.ReadLine())
                 {
-                    executingLoop = false;
+                    case "1":
+                        CreateStudent();
+                        break;
+
+                    case "2":
+                        SearchStudent();
+                        break;
+
+                    case "3":
+                        UpdateStudent();
+                        break;
+
+                    case "4":
+                        CreateTeacher();
+                        break;
+
+                    case "5":
+                        SearchTeacher();
+                        break;
+
+                    case "6":
+                        UpdateTeacher();
+                        break;
+
+                    case "7":
+                        Environment.Exit(0);
+                        break;
                 }
-            }
 
-            student.Grades = grades;
-        }
-
-        DataServiceJson dataServiceJson = new DataServiceJson();
-        dataServiceJson.SaveStudent(student);
-    }
-
-    private static void CreateTeacher()
-    {
-        var teacher = new Teacher
-        {
-            FirstName = GetInput("Type the First Name"),
-            LastName = GetInput("Type the Last Name"),
-            Position = GetInput("Type the Position"),
-            Salary = Convert.ToDecimal(GetInput("Type the current salary"))
-        };
-
-        var teachingSubjects = new List<string?>();
-
-        if (PromptConfirmation("Would you like to inform the teaching subjects?"))
-        {
-            bool executingLoop = true;
-
-            while (executingLoop)
-            {
-                teachingSubjects.Add(GetInput("Subject"));
-
-                var response = GetInput("Type Y to register more grades or N to exit");
-
-                if (response.ToLower() == "n")
+                if (PromptConfirmation("Would you like to do anything else?"))
                 {
-                    executingLoop = false;
+                    finished = false;
                 }
-            }
-
-            teacher.TeachingSubjects = teachingSubjects;
+                else
+                {
+                    finished = true;
+                }
+            } while (!finished);
         }
 
-        DataServiceJson dataServiceJson = new DataServiceJson();
-        dataServiceJson.SaveTeacher(teacher);
-    }
-
-    private static string? GetInput(string prompt)
-    {
-        string? result = "";
-        do
+        private static void SearchStudent()
         {
-            Console.WriteLine(prompt);
-            result = Console.ReadLine();
-            if (string.IsNullOrEmpty(result))
-            {
-                Console.WriteLine("Empty input, please try again");
-            }
-        } while (string.IsNullOrEmpty(result));
-        return result;
-    }
+            var firstName = GetInput("Type the First Name");
 
-    private static bool PromptConfirmation(string confirmText)
-    {
-        Console.Write(confirmText + " [y/n] : ");
-        ConsoleKey response = Console.ReadKey(false).Key;
-        Console.WriteLine();
-        return response == ConsoleKey.Y;
+            var lastName = GetInput("Type the Last Name");
+
+            var student = _studentService.SearchStudentByFullName(firstName, lastName);
+
+            if (!string.IsNullOrEmpty(student.FirstName))
+            {
+                Console.WriteLine($"{student.FirstName} {student.LastName}");
+            }
+            else
+                Console.WriteLine("Student not found");
+        }
+
+        private static void SearchTeacher()
+        {
+            var firstName = GetInput("Type the First Name");
+            var lastName = GetInput("Type the Last Name");
+
+            var teacher = _teacherService.SearchTeacherByFullName(firstName, lastName);
+
+            if (!string.IsNullOrEmpty(teacher.FirstName))
+            {
+                Console.WriteLine($"{teacher.FirstName} {teacher.LastName}");
+            }
+            else
+                Console.WriteLine("Teacher not found");
+        }
+
+        private static void UpdateTeacher()
+        {
+            var firstName = GetInput("Type the First Name");
+            var lastName = GetInput("Type the Last Name");
+
+            var teacher = _teacherService.SearchTeacherByFullName(firstName, lastName);
+
+            if (PromptConfirmation("Would like to update her/his first name?"))
+            {
+                teacher.FirstName = GetInput("Type the First Name"); ;
+            }
+            if (PromptConfirmation("Would like to update her/his last name?"))
+            {
+                teacher.LastName = GetInput("Type the Last Name"); ;
+            }
+
+            _teacherService.UpdateTeacher(teacher, firstName, lastName);
+        }
+
+        private static void UpdateStudent()
+        {
+            var firstName = GetInput("Type the First Name");
+            var lastName = GetInput("Type the Last Name");
+
+            var student = _studentService.SearchStudentByFullName(firstName, lastName);
+
+            if (PromptConfirmation("Would like to update her/his first name?"))
+            {
+                student.FirstName = GetInput("Type the First Name"); ;
+            }
+            if (PromptConfirmation("Would like to update her/his last name?"))
+            {
+                student.LastName = GetInput("Type the Last Name"); ;
+            }
+
+            _studentService.UpdateStudent(student, firstName, lastName);
+        }
+
+        private static void CreateStudent()
+        {
+            var student = new StudentDto
+            {
+                FirstName = GetInput("Type the First Name"),
+                LastName = GetInput("Type the Last Name")
+            };
+
+            var grades = new List<GradeDto>();
+
+            if (PromptConfirmation("Would you like to inform the grades?"))
+            {
+                bool finished = false;
+
+                while (!finished)
+                {
+                    var grade = new GradeDto
+                    {
+                        Value = Convert.ToDouble(GetInput("Grade")),
+                        Subject = GetInput("Subject"),
+                        Observation = GetInput("Observation")
+                    };
+
+                    grades.Add(grade);
+
+                    var response = GetInput("Type Y to register more grades or N to exit");
+
+                    if (response.ToLower() == "n")
+                    {
+                        finished = true;
+                    }
+                }
+
+                student.Grades = grades;
+            }
+
+            _studentService.SaveStudent(student);
+        }
+
+        private static void CreateTeacher()
+        {
+            var teacher = new TeacherDto
+            {
+                FirstName = GetInput("Type the First Name"),
+                LastName = GetInput("Type the Last Name"),
+                Position = GetInput("Type the Position"),
+                Salary = Convert.ToDecimal(GetInput("Type the current salary"))
+            };
+
+            if (PromptConfirmation("Would you like to inform the teaching subjects?"))
+            {
+                bool finished = false;
+
+                List<string?> teachingSubjects = new List<string?>(); ;
+
+                while (!finished)
+                {
+                    var subject = GetInput("Subject");
+                    teachingSubjects.Add(subject);
+
+                    var response = GetInput("Type Y to register more subjects or N to exit");
+
+                    if (response.ToLower() == "n")
+                    {
+                        finished = true;
+                    }
+                }
+
+                teacher.TeachingSubjects = teachingSubjects;
+            }
+
+            _teacherService.SaveTeacher(teacher);
+        }
+
+        private static string? GetInput(string prompt)
+        {
+            string? result = "";
+            do
+            {
+                Console.WriteLine(prompt);
+                result = Console.ReadLine();
+                if (string.IsNullOrEmpty(result))
+                {
+                    Console.WriteLine("Empty input, please try again");
+                }
+            } while (string.IsNullOrEmpty(result));
+            return result;
+        }
+
+        private static bool PromptConfirmation(string confirmText)
+        {
+            Console.Write(confirmText + " [y/n] : ");
+            ConsoleKey response = Console.ReadKey(false).Key;
+            Console.WriteLine();
+            return response == ConsoleKey.Y;
+        }
     }
 }
